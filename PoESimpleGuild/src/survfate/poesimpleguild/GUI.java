@@ -72,6 +72,11 @@ public class GUI extends JPanel implements ActionListener {
 					return Object.class;
 				}
 			}
+
+			public boolean isCellEditable(int row, int column) {
+				return false;
+				// This causes all cells to be not editable
+			}
 		};
 
 		table = new JTable(tableModel);
