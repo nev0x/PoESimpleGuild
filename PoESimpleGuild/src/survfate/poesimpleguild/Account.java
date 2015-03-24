@@ -50,7 +50,7 @@ public class Account {
 
 	@SuppressWarnings("deprecation")
 	public Date getLastLadderOnline() throws IOException {
-		String leagues[] = { "Standard", "Hardcore", "Torment", "Bloodlines" };
+		String leagues[] = { "standard", "hardcore", "omrtb", "omrtbhc" };
 		lastLadderOnline = new Date("Wed Dec 31 19:00:00 1969 EST");
 
 		for (String league : leagues) {
