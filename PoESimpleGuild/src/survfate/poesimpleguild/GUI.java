@@ -55,7 +55,7 @@ public class GUI extends JPanel implements ActionListener {
 	// private JPanel p2;
 	// private JPanel p3;
 	private JButton buttonGet;
-	private JTextField textFieldID;
+	private JTextField jTextField;
 	private JTextArea output;
 
 	public GUI() {
@@ -86,19 +86,19 @@ public class GUI extends JPanel implements ActionListener {
 		table.getColumnModel().getColumn(3).setCellRenderer(new DateRenderer());
 		table.getColumnModel().getColumn(4).setCellRenderer(new DateRenderer());
 		table.getColumnModel().getColumn(5).setCellRenderer(new TimeRenderer());
-		add(new JScrollPane(table), "Center");
+		add(new JScrollPane(table), BorderLayout.CENTER);
 
 		panel = new JPanel();
 		panel.setLayout(new BorderLayout(5, 5));
 		panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-		add(panel, "North");
+		add(panel, BorderLayout.NORTH);
 
 		p1 = new JPanel();
 		p1.setLayout(new FlowLayout());
 		panel.add(p1, "Center");
 		p1.add(new JLabel("Guild ID:"));
-		textFieldID = new JTextField(6);
-		p1.add(textFieldID);
+		jTextField = new JTextField(6);
+		p1.add(jTextField);
 		buttonGet = new JButton("Get Guild Members Data");
 		buttonGet.addActionListener(this);
 		p1.add(buttonGet);
@@ -107,7 +107,7 @@ public class GUI extends JPanel implements ActionListener {
 		DefaultCaret ouputCaret = (DefaultCaret) output.getCaret();
 		ouputCaret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 		output.setEditable(false);
-		add(new JScrollPane(output), "South");
+		add(new JScrollPane(output), BorderLayout.SOUTH);
 	}
 
 	public void actionPerformed(ActionEvent event) {
@@ -148,17 +148,16 @@ public class GUI extends JPanel implements ActionListener {
 				long tStart = System.currentTimeMillis();
 
 				buttonGet.setEnabled(false);
-				textFieldID.setEnabled(false);
+				jTextField.setEnabled(false);
 
 				tableModel.getDataVector().removeAllElements();
 				tableModel.fireTableDataChanged();
 
 				Document jsoupDoc = Jsoup
 						.connect(
-								(new StringBuilder(
-										"http://www.pathofexile.com/guild/profile/"))
-										.append(textFieldID.getText())
-										.toString()).timeout(5000).get();
+								"http://www.pathofexile.com/guild/profile/"
+										+ jTextField.getText()).timeout(5000)
+						.get();
 				Element detailsContent = jsoupDoc.getElementsByClass(
 						"details-content").first();
 				int i = 0;
@@ -202,16 +201,14 @@ public class GUI extends JPanel implements ActionListener {
 						tableModel.addRow(new Object[] { accountName,
 								memberType, title, joinedDate, lastVisitedDate,
 								lastLadderOnline });
-						output.append((new StringBuilder("Status: Loaded "))
-								.append(i).append("/").append(guildSize)
-								.append(" Members\n").toString());
+						output.append("Status: Loaded " + i + "/" + guildSize
+								+ " Members\n");
 					} else {
 						tableModel.addRow(new Object[] { accountName,
 								memberType, title, joinedDate, lastVisitedDate,
 								lastLadderOnline });
-						output.append((new StringBuilder("Status: Loaded "))
-								.append(i).append("/").append(guildSize)
-								.append(" Members\n").toString());
+						output.append("Status: Loaded " + i + "/" + guildSize
+								+ " Members\n");
 					}
 
 				}
@@ -220,10 +217,15 @@ public class GUI extends JPanel implements ActionListener {
 				double elapsedSeconds = tDelta / 1000.0;
 				output.append("\nProcess completed, elapsed time: "
 						+ elapsedSeconds + " second(s)");
-			} catch (IOException e) {
+			} catch (org.jsoup.HttpStatusException e) {
 				JOptionPane.showMessageDialog(null,
 						"Invalid Guild ID! Please try again.", "Error", 0);
+				e.printStackTrace();
 			} catch (ParseException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				JOptionPane.showMessageDialog(null,
+						"Connection timed out! Please try again.", "Error", 0);
 				e.printStackTrace();
 			}
 			return null;
@@ -232,7 +234,7 @@ public class GUI extends JPanel implements ActionListener {
 		protected void done() {
 			tableModel.fireTableDataChanged();
 			buttonGet.setEnabled(true);
-			textFieldID.setEnabled(true);
+			jTextField.setEnabled(true);
 		}
 	}
 

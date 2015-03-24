@@ -3,6 +3,7 @@ package survfate.poesimpleguild;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -30,10 +31,8 @@ public class Account {
 		this.profile = profile;
 		jsoupDoc = Jsoup
 				.connect(
-						(new StringBuilder(
-								"http://www.pathofexile.com/account/view-profile/"))
-								.append(profile).toString()).timeout(5000)
-				.get();
+						"http://www.pathofexile.com/account/view-profile/"
+								+ profile).timeout(5000).get();
 		details = jsoupDoc.getElementsByClass("details").first();
 	}
 
@@ -55,8 +54,15 @@ public class Account {
 		lastLadderOnline = new Date("Wed Dec 31 19:00:00 1969 EST");
 
 		for (String league : leagues) {
-			InputStream input = new URL("http://poe.pwx.me/api/ladder?league="
-					+ league + "&account=" + profile).openStream();
+			URL url = new URL("http://poe.pwx.me/api/ladder?league=" + league
+					+ "&account=" + profile);
+			HttpURLConnection urlConnection = (HttpURLConnection) url
+					.openConnection();
+			HttpURLConnection.setFollowRedirects(false);
+			urlConnection.setConnectTimeout(10 * 1000);
+			urlConnection.setRequestMethod("GET");
+			urlConnection.connect();
+			InputStream input = urlConnection.getInputStream();
 			InputStreamReader reader = new InputStreamReader(input);
 
 			JsonObject jsonObject = null;
