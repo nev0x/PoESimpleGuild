@@ -48,13 +48,14 @@ class TimeRenderer extends DefaultTableCellRenderer {
 @SuppressWarnings("serial")
 public class GUI extends JPanel implements ActionListener {
 
+	private static String VERSION = "v0.1.2";
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private JPanel panel;
 	private JPanel p1;
-	// private JPanel p2;
-	// private JPanel p3;
+
 	private JButton buttonGet;
+	private JCheckBox checkBoxPoeTrade;
 	private JTextField jTextField;
 	private JTextArea output;
 
@@ -62,15 +63,18 @@ public class GUI extends JPanel implements ActionListener {
 		setLayout(new BorderLayout());
 		tableModel = new DefaultTableModel(new String[] { "Account Name",
 				"Member Type", "Challenge(s) Done", "Joined Date",
-				"Last Visted Date", "Last Ladder Online" }, 0) {
+				"Last Visted Date", "Last Ladder Online", "Poe.Trade Online" },
+				0) {
 
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			public Class getColumnClass(int column) {
-				if (column == 3 || column == 4 || column == 5) {
+				if (column == 3 || column == 4 || column == 5)
 					return Date.class;
-				} else {
+				else if (column == 6)
+					return Boolean.class;
+				else
 					return Object.class;
-				}
+
 			}
 
 			public boolean isCellEditable(int row, int column) {
@@ -95,13 +99,18 @@ public class GUI extends JPanel implements ActionListener {
 
 		p1 = new JPanel();
 		p1.setLayout(new FlowLayout());
-		panel.add(p1, "Center");
+		panel.add(p1, BorderLayout.CENTER);
 		p1.add(new JLabel("Guild ID:"));
 		jTextField = new JTextField(6);
 		p1.add(jTextField);
 		buttonGet = new JButton("Get Guild Members Data");
 		buttonGet.addActionListener(this);
 		p1.add(buttonGet);
+
+		p1.add(new JLabel("Poe.Trade Online Check?"));
+		checkBoxPoeTrade = new JCheckBox();
+		checkBoxPoeTrade.addActionListener(this);
+		p1.add(checkBoxPoeTrade);
 
 		output = new JTextArea(5, 40);
 		DefaultCaret ouputCaret = (DefaultCaret) output.getCaret();
@@ -131,7 +140,7 @@ public class GUI extends JPanel implements ActionListener {
 		}
 
 		// UIManager.put("swing.boldMetal", Boolean.FALSE);
-		JFrame frame = new JFrame("PoE Simple Guild v0.1");
+		JFrame frame = new JFrame("PoE Simple Guild " + VERSION);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		GUI newContentPane = new GUI();
@@ -149,6 +158,7 @@ public class GUI extends JPanel implements ActionListener {
 
 				buttonGet.setEnabled(false);
 				jTextField.setEnabled(false);
+				checkBoxPoeTrade.setEnabled(false);
 
 				tableModel.getDataVector().removeAllElements();
 				tableModel.fireTableDataChanged();
@@ -167,7 +177,7 @@ public class GUI extends JPanel implements ActionListener {
 				output.setText("");
 				output.append("Guild Name: "
 						+ detailsContent.getElementsByClass("name").first()
-								.text() + "\n");
+								.text() + "\t");
 				try {
 					output.append("Guild Tag: "
 							+ detailsContent.getElementsByClass("guild-tag")
@@ -181,7 +191,7 @@ public class GUI extends JPanel implements ActionListener {
 				output.append("Created: "
 						+ detailsContent.child(1).childNode(3).toString()
 						+ "\n");
-				output.append("Total Members: " + guildSize + "\n\n");
+				output.append("Total Members: " + guildSize + "\n");
 
 				for (Element member : detailsContent
 						.getElementsByClass("member")) {
@@ -197,16 +207,20 @@ public class GUI extends JPanel implements ActionListener {
 					Date joinedDate = account.getJoinedDate();
 					Date lastVisitedDate = account.getLastVisitedDate();
 					Date lastLadderOnline = account.getLastLadderOnline();
+					boolean poeTradeOnline = false;
+					if (checkBoxPoeTrade.isSelected() == true)
+						poeTradeOnline = account.getPoeTradeOnlineStatus();
+
 					if (member.child(0).child(0).childNodeSize() == 2) {
 						tableModel.addRow(new Object[] { accountName,
 								memberType, title, joinedDate, lastVisitedDate,
-								lastLadderOnline });
+								lastLadderOnline, poeTradeOnline });
 						output.append("Status: Loaded " + i + "/" + guildSize
 								+ " Members\n");
 					} else {
 						tableModel.addRow(new Object[] { accountName,
 								memberType, title, joinedDate, lastVisitedDate,
-								lastLadderOnline });
+								lastLadderOnline, poeTradeOnline });
 						output.append("Status: Loaded " + i + "/" + guildSize
 								+ " Members\n");
 					}
@@ -215,7 +229,7 @@ public class GUI extends JPanel implements ActionListener {
 				long tEnd = System.currentTimeMillis();
 				long tDelta = tEnd - tStart;
 				double elapsedSeconds = tDelta / 1000.0;
-				output.append("\nProcess completed, elapsed time: "
+				output.append("Process completed, elapsed time: "
 						+ elapsedSeconds + " second(s)");
 			} catch (org.jsoup.HttpStatusException e) {
 				JOptionPane.showMessageDialog(null,
@@ -235,6 +249,7 @@ public class GUI extends JPanel implements ActionListener {
 			tableModel.fireTableDataChanged();
 			buttonGet.setEnabled(true);
 			jTextField.setEnabled(true);
+			checkBoxPoeTrade.setEnabled(true);
 		}
 	}
 
@@ -245,5 +260,4 @@ public class GUI extends JPanel implements ActionListener {
 			}
 		});
 	}
-
 }

@@ -19,17 +19,16 @@ import com.eclipsesource.json.JsonValue;
 public class Account {
 
 	String profile;
-	Document jsoupDoc;
 	Element details;
 	Date joined;
 	Date lastVisited;
 	Date lastLadderOnline;
-	// Date XYZOnline;
+	boolean poeTradeOnline = false;
 	SimpleDateFormat sDateFormat = new SimpleDateFormat("MMMM dd, yyyy");;
 
 	public Account(String profile) throws IOException, ParseException {
 		this.profile = profile;
-		jsoupDoc = Jsoup
+		Document jsoupDoc = Jsoup
 				.connect(
 						"http://www.pathofexile.com/account/view-profile/"
 								+ profile).timeout(5000).get();
@@ -48,42 +47,70 @@ public class Account {
 		return lastVisited;
 	}
 
-	@SuppressWarnings("deprecation")
 	public Date getLastLadderOnline() throws IOException {
-		String leagues[] = { "standard", "hardcore", "omrtb", "omrtbhc" };
-		lastLadderOnline = new Date("Wed Dec 31 19:00:00 1969 EST");
 
-		for (String league : leagues) {
-			URL url = new URL("http://poe.pwx.me/api/ladder?league=" + league
-					+ "&account=" + profile);
-			HttpURLConnection urlConnection = (HttpURLConnection) url
-					.openConnection();
-			HttpURLConnection.setFollowRedirects(false);
-			urlConnection.setConnectTimeout(10 * 1000);
-			urlConnection.setRequestMethod("GET");
-			urlConnection.connect();
-			InputStream input = urlConnection.getInputStream();
-			InputStreamReader reader = new InputStreamReader(input);
+		lastLadderOnline = new Date(0);
 
-			JsonObject jsonObject = null;
-			try {
-				jsonObject = JsonObject.readFrom(reader);
-			} catch (com.eclipsesource.json.ParseException e) {
-				continue; // If no League Ladder data found then just ignore
-			}
+		URL url = new URL("http://poe.pwx.me/api/ladder?league=all&account="
+				+ profile);
+		HttpURLConnection urlConnection = (HttpURLConnection) url
+				.openConnection();
+		HttpURLConnection.setFollowRedirects(false);
+		urlConnection.setConnectTimeout(10 * 1000);
+		urlConnection.setRequestMethod("GET");
+		urlConnection.connect();
+		InputStream input = urlConnection.getInputStream();
+		InputStreamReader reader = new InputStreamReader(input);
 
-			for (String charName : jsonObject.names()) {
-				JsonValue jsonValue = jsonObject.get(charName);
+		JsonObject jsonObject = null;
 
-				Date lastOnlineHuman = new Date(jsonValue.asObject()
-						.get("lastOnlineHuman").asString());
-				if (lastOnlineHuman.after(lastLadderOnline)) {
-					lastLadderOnline = lastOnlineHuman;
-				}
-			}
+		try {
+			jsonObject = JsonObject.readFrom(reader);
+		} catch (com.eclipsesource.json.ParseException e) {
+			// Account without Ladder data
 			reader.close();
 			input.close();
+
+			return lastLadderOnline;
 		}
+
+		for (String charName : jsonObject.names()) {
+			JsonValue jsonValue = jsonObject.get(charName);
+
+			Date lastOnlineHuman = new Date((long) 1000
+					* Integer.parseInt(jsonValue.asObject().get("lastOnline")
+							.asString())); // Epoch Timestamp to Human
+			if (lastOnlineHuman.after(lastLadderOnline)) {
+				lastLadderOnline = lastOnlineHuman;
+			}
+		}
+		reader.close();
+		input.close();
+
 		return lastLadderOnline;
+	}
+
+	public boolean getPoeTradeOnlineStatus() throws IOException {
+		String[] leagues = { "Torment/Bloodlines", "Torment/Bloodlines HC",
+				"Standard", "Hardcore" };
+
+		for (String league : leagues) {
+			Document jsoupDoc = Jsoup.connect("http://poe.trade/search")
+					.data("league", league, "seller", profile, "online", "x")
+					.timeout(5000).post();
+
+			if (!jsoupDoc.getElementsByClass("search-results-block").text()
+					.equals("")) {
+				poeTradeOnline = true;
+				break;
+			}
+		}
+		return poeTradeOnline;
+	}
+
+	public static void main(String[] args) throws IOException, ParseException {
+		Account account = new Account("GodofRabbits");
+		System.out.println(account.profile);
+		System.out.println(account.getPoeTradeOnlineStatus());
 	}
 }
