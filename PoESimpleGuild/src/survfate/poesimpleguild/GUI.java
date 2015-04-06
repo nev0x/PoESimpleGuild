@@ -1,49 +1,38 @@
 package survfate.poesimpleguild;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.table.*;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.text.DefaultCaret;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-@SuppressWarnings("serial")
-class DateRenderer extends DefaultTableCellRenderer {
-
-	SimpleDateFormat sDateFormat;
-
-	public DateRenderer() {
-		sDateFormat = new SimpleDateFormat("MMMM dd, yyyy");
-	}
-
-	public void setValue(Object value) {
-		setText(value != null ? sDateFormat.format(value) : "");
-	}
-}
-
-@SuppressWarnings("serial")
-class TimeRenderer extends DefaultTableCellRenderer {
-
-	SimpleDateFormat sTimeFormat;
-
-	public TimeRenderer() {
-		sTimeFormat = new SimpleDateFormat("MMMM dd, yyyy hh:mm a zzz");
-	}
-
-	public void setValue(Object value) {
-		setText(value != null ? sTimeFormat.format(value) : "");
-	}
-}
+import survfate.poesimpleguild.tablecellrenderer.DateRenderer;
+import survfate.poesimpleguild.tablecellrenderer.TimeRenderer;
 
 @SuppressWarnings("serial")
 public class GUI extends JPanel implements ActionListener {
@@ -83,13 +72,24 @@ public class GUI extends JPanel implements ActionListener {
 			}
 		};
 
-		table = new JTable(tableModel);
+		table = new JTable(tableModel) {
+			public boolean getScrollableTracksViewportWidth() {
+				return getPreferredSize().width < getParent().getWidth();
+			}
+		};
+
 		table.setPreferredScrollableViewportSize(new Dimension(700, 300));
 		table.setFillsViewportHeight(true);
 		table.setAutoCreateRowSorter(true);
+		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		table.setRowHeight(25);
+
+		// table.getColumnModel().getColumn(2)
+		// .setCellRenderer(new ChallengesIconRenderer());
 		table.getColumnModel().getColumn(3).setCellRenderer(new DateRenderer());
 		table.getColumnModel().getColumn(4).setCellRenderer(new DateRenderer());
 		table.getColumnModel().getColumn(5).setCellRenderer(new TimeRenderer());
+
 		add(new JScrollPane(table), BorderLayout.CENTER);
 
 		panel = new JPanel();
@@ -121,8 +121,8 @@ public class GUI extends JPanel implements ActionListener {
 
 	public void actionPerformed(ActionEvent event) {
 		if (event.getSource() == buttonGet) {
-			LoadData loadData = new LoadData();
-			loadData.execute();
+			LoadGuildData load = new LoadGuildData();
+			load.execute();
 		}
 	}
 
@@ -138,7 +138,6 @@ public class GUI extends JPanel implements ActionListener {
 			// If Nimbus is not available, you can set the GUI to another look
 			// and feel.
 		}
-
 		// UIManager.put("swing.boldMetal", Boolean.FALSE);
 		JFrame frame = new JFrame("PoE Simple Guild " + VERSION);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -151,7 +150,15 @@ public class GUI extends JPanel implements ActionListener {
 		frame.setVisible(true);
 	}
 
-	class LoadData extends SwingWorker<Void, Void> {
+	public static void main(String args[]) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				GUI.createAndShowGUI();
+			}
+		});
+	}
+
+	class LoadGuildData extends SwingWorker<Void, Void> {
 		protected Void doInBackground() {
 			try {
 				long tStart = System.currentTimeMillis();
@@ -210,6 +217,11 @@ public class GUI extends JPanel implements ActionListener {
 					boolean poeTradeOnline = false;
 					if (checkBoxPoeTrade.isSelected() == true)
 						poeTradeOnline = account.getPoeTradeOnlineStatus();
+					// else {
+					// table.getColumnModel().getColumn(6).setMinWidth(0);
+					// table.getColumnModel().getColumn(6).setMaxWidth(0);
+					// table.getColumnModel().getColumn(6).setWidth(0);
+					// }
 
 					if (member.child(0).child(0).childNodeSize() == 2) {
 						tableModel.addRow(new Object[] { accountName,
@@ -251,13 +263,5 @@ public class GUI extends JPanel implements ActionListener {
 			jTextField.setEnabled(true);
 			checkBoxPoeTrade.setEnabled(true);
 		}
-	}
-
-	public static void main(String args[]) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				GUI.createAndShowGUI();
-			}
-		});
 	}
 }
