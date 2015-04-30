@@ -7,6 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 
 import org.jsoup.Jsoup;
@@ -51,8 +52,9 @@ public class Account {
 
 		lastLadderOnline = new Date(0);
 
-		URL url = new URL("http://poe.pwx.me/api/ladder?league=all&account="
-				+ profile);
+		URL url = new URL(
+				"http://api.exiletools.com/ladder?league=all&account="
+						+ profile);
 		HttpURLConnection urlConnection = (HttpURLConnection) url
 				.openConnection();
 		HttpURLConnection.setFollowRedirects(false);
@@ -76,10 +78,15 @@ public class Account {
 
 		for (String charName : jsonObject.names()) {
 			JsonValue jsonValue = jsonObject.get(charName);
+			String epochSecond = "0";
 
-			Date lastOnlineHuman = new Date((long) 1000
-					* Integer.parseInt(jsonValue.asObject().get("lastOnline")
-							.asString())); // Epoch Timestamp to Human
+			if (jsonValue.asObject().get("lastOnline") != null) {
+				epochSecond = jsonValue.asObject().get("lastOnline").asString();
+			}
+
+			Date lastOnlineHuman = Date.from(Instant.ofEpochSecond(Integer
+					.parseInt(epochSecond))); // Epoch Timestamp to Human
+
 			if (lastOnlineHuman.after(lastLadderOnline)) {
 				lastLadderOnline = lastOnlineHuman;
 			}
@@ -109,8 +116,8 @@ public class Account {
 	}
 
 	public static void main(String[] args) throws IOException, ParseException {
-		Account account = new Account("GodofRabbits");
-		System.out.println(account.profile);
-		System.out.println(account.getPoeTradeOnlineStatus());
+		Account account = new Account("surVfate");
+		// System.out.println(account.profile);
+		System.out.println(account.getLastLadderOnline());
 	}
 }

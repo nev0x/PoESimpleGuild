@@ -37,7 +37,7 @@ import survfate.poesimpleguild.tablecellrenderer.TimeRenderer;
 @SuppressWarnings("serial")
 public class GUI extends JPanel implements ActionListener {
 
-	private static String VERSION = "v0.1.2";
+	private static String VERSION = "v0.1.2b";
 	private JTable table;
 	private DefaultTableModel tableModel;
 	private JPanel panel;
