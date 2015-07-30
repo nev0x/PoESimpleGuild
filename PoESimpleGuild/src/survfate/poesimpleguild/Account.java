@@ -3,11 +3,14 @@ package survfate.poesimpleguild;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream.GetField;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 
 import org.jsoup.Jsoup;
@@ -48,8 +51,28 @@ public class Account {
 		return lastVisited;
 	}
 
-	public Date getLastLadderOnline() throws IOException {
+	public String[] getActiveLeagues() throws IOException {
+		ArrayList<String> activeLeagues = new ArrayList<String>();
 
+		URL url = new URL("http://api.exiletools.com/ladder?activeleagues=1");
+		HttpURLConnection urlConnection = (HttpURLConnection) url
+				.openConnection();
+		HttpURLConnection.setFollowRedirects(false);
+		urlConnection.setConnectTimeout(10 * 1000);
+		urlConnection.setRequestMethod("GET");
+		urlConnection.connect();
+		InputStream input = urlConnection.getInputStream();
+		InputStreamReader reader = new InputStreamReader(input);
+		JsonObject jsonObject = JsonObject.readFrom(reader);
+
+		for (String leagueName : jsonObject.names()) {
+			activeLeagues.add(jsonObject.get(leagueName).asString());
+		}
+
+		return activeLeagues.toArray(new String[activeLeagues.size()]);
+	}
+
+	public Date getLastLadderOnline() throws IOException {
 		lastLadderOnline = new Date(0);
 
 		URL url = new URL(
@@ -116,8 +139,10 @@ public class Account {
 	}
 
 	public static void main(String[] args) throws IOException, ParseException {
-		Account account = new Account("surVfate");
+		// Account account = new Account("surVfate");
 		// System.out.println(account.profile);
-		System.out.println(account.getLastLadderOnline());
+		// System.out.println(account.getLastLadderOnline());
+		// System.out.println(account.getActiveLeagues());
+
 	}
 }

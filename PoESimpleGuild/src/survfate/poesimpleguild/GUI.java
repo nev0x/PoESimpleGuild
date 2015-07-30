@@ -3,6 +3,7 @@ package survfate.poesimpleguild;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -50,10 +51,8 @@ public class GUI extends JPanel implements ActionListener {
 
 	public GUI() {
 		setLayout(new BorderLayout());
-		tableModel = new DefaultTableModel(new String[] { "Account Name",
-				"Member Type", "Challenge(s) Done", "Joined Date",
-				"Last Visted Date", "Last Ladder Online", "Poe.Trade Online" },
-				0) {
+		tableModel = new DefaultTableModel(new String[] { "Account Name", "Member Type", "Challenge(s) Done",
+				"Joined Date", "Last Visted Date", "Last Ladder Online", "Poe.Trade Online" }, 0) {
 
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			public Class getColumnClass(int column) {
@@ -126,16 +125,26 @@ public class GUI extends JPanel implements ActionListener {
 		}
 	}
 
+	public static void setUIFont(javax.swing.plaf.FontUIResource f) {
+		java.util.Enumeration keys = UIManager.getDefaults().keys();
+		while (keys.hasMoreElements()) {
+			Object key = keys.nextElement();
+			Object value = UIManager.get(key);
+			if (value != null && value instanceof javax.swing.plaf.FontUIResource)
+				UIManager.put(key, f);
+		}
+	}
+
 	private static void createAndShowGUI() {
+
 		try {
-			for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
-					UIManager.setLookAndFeel(info.getClassName());
-					break;
-				}
-			}
+			org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.launchBeautyEyeLNF();
+
+			// UIManager.setLookAndFeel(org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.getBeautyEyeLNFCrossPlatform());
+			// setUIFont(new javax.swing.plaf.FontUIResource("Tahoma",
+			// Font.PLAIN, 13));
 		} catch (Exception e) {
-			// If Nimbus is not available, you can set the GUI to another look
+			// If not available, you can set the GUI to another look
 			// and feel.
 		}
 		// UIManager.put("swing.boldMetal", Boolean.FALSE);
@@ -170,38 +179,25 @@ public class GUI extends JPanel implements ActionListener {
 				tableModel.getDataVector().removeAllElements();
 				tableModel.fireTableDataChanged();
 
-				Document jsoupDoc = Jsoup
-						.connect(
-								"http://www.pathofexile.com/guild/profile/"
-										+ jTextField.getText()).timeout(5000)
-						.get();
-				Element detailsContent = jsoupDoc.getElementsByClass(
-						"details-content").first();
+				Document jsoupDoc = Jsoup.connect("http://www.pathofexile.com/guild/profile/" + jTextField.getText())
+						.timeout(5000).get();
+				Element detailsContent = jsoupDoc.getElementsByClass("details-content").first();
 				int i = 0;
-				int guildSize = detailsContent.getElementsByClass("member")
-						.size();
+				int guildSize = detailsContent.getElementsByClass("member").size();
 
 				output.setText("");
-				output.append("Guild Name: "
-						+ detailsContent.getElementsByClass("name").first()
-								.text() + "\t");
+				output.append("Guild Name: " + detailsContent.getElementsByClass("name").first().text() + "\t");
 				try {
-					output.append("Guild Tag: "
-							+ detailsContent.getElementsByClass("guild-tag")
-									.first().text() + "\n");
-					output.append("Guild Status: "
-							+ detailsContent.getElementsByClass("guild-status")
-									.first().text() + "\n");
+					output.append("Guild Tag: " + detailsContent.getElementsByClass("guild-tag").first().text() + "\n");
+					output.append(
+							"Guild Status: " + detailsContent.getElementsByClass("guild-status").first().text() + "\n");
 				} catch (Exception e) {
 					// Some Guild don't have these two
 				}
-				output.append("Created: "
-						+ detailsContent.child(1).childNode(3).toString()
-						+ "\n");
+				output.append("Created: " + detailsContent.child(1).childNode(3).toString() + "\n");
 				output.append("Total Members: " + guildSize + "\n");
 
-				for (Element member : detailsContent
-						.getElementsByClass("member")) {
+				for (Element member : detailsContent.getElementsByClass("member")) {
 					i++;
 					String accountName = member.child(0).text().trim();
 					String memberType = member.child(1).text().trim();
@@ -224,34 +220,27 @@ public class GUI extends JPanel implements ActionListener {
 					// }
 
 					if (member.child(0).child(0).childNodeSize() == 2) {
-						tableModel.addRow(new Object[] { accountName,
-								memberType, title, joinedDate, lastVisitedDate,
+						tableModel.addRow(new Object[] { accountName, memberType, title, joinedDate, lastVisitedDate,
 								lastLadderOnline, poeTradeOnline });
-						output.append("Status: Loaded " + i + "/" + guildSize
-								+ " Members\n");
+						output.append("Status: Loaded " + i + "/" + guildSize + " Members\n");
 					} else {
-						tableModel.addRow(new Object[] { accountName,
-								memberType, title, joinedDate, lastVisitedDate,
+						tableModel.addRow(new Object[] { accountName, memberType, title, joinedDate, lastVisitedDate,
 								lastLadderOnline, poeTradeOnline });
-						output.append("Status: Loaded " + i + "/" + guildSize
-								+ " Members\n");
+						output.append("Status: Loaded " + i + "/" + guildSize + " Members\n");
 					}
 
 				}
 				long tEnd = System.currentTimeMillis();
 				long tDelta = tEnd - tStart;
 				double elapsedSeconds = tDelta / 1000.0;
-				output.append("Process completed, elapsed time: "
-						+ elapsedSeconds + " second(s)");
+				output.append("Process completed, elapsed time: " + elapsedSeconds + " second(s)");
 			} catch (org.jsoup.HttpStatusException e) {
-				JOptionPane.showMessageDialog(null,
-						"Invalid Guild ID! Please try again.", "Error", 0);
+				JOptionPane.showMessageDialog(null, "Invalid Guild ID! Please try again.", "Error", 0);
 				e.printStackTrace();
 			} catch (ParseException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
-				JOptionPane.showMessageDialog(null,
-						"Connection timed out! Please try again.", "Error", 0);
+				JOptionPane.showMessageDialog(null, "Connection timed out! Please try again.", "Error", 0);
 				e.printStackTrace();
 			}
 			return null;
