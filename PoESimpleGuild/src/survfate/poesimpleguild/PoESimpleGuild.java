@@ -4,10 +4,13 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
+import java.time.Instant;
 import java.util.Date;
 
 import javax.swing.BorderFactory;
@@ -24,7 +27,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
-import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.DefaultCaret;
 
@@ -32,14 +35,17 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import survfate.poesimpleguild.tablecellrenderer.ChallengeIconsRenderer;
 import survfate.poesimpleguild.tablecellrenderer.DateRenderer;
+import survfate.poesimpleguild.tablecellrenderer.LeftRenderer;
 import survfate.poesimpleguild.tablecellrenderer.TimeRenderer;
 
 @SuppressWarnings("serial")
-public class GUI extends JPanel implements ActionListener {
+public class PoESimpleGuild extends JPanel implements ActionListener {
 
-	private static String VERSION = "v0.1.2b";
+	private static String VERSION = "v0.1.3";
 	private JTable table;
+	private TableColumnAdjuster adjuster;
 	private DefaultTableModel tableModel;
 	private JPanel panel;
 	private JPanel p1;
@@ -49,20 +55,21 @@ public class GUI extends JPanel implements ActionListener {
 	private JTextField jTextField;
 	private JTextArea output;
 
-	public GUI() {
+	public PoESimpleGuild() {
 		setLayout(new BorderLayout());
 		tableModel = new DefaultTableModel(new String[] { "Account Name", "Member Type", "Challenge(s) Done",
-				"Joined Date", "Last Visted Date", "Last Ladder Online", "Poe.Trade Online" }, 0) {
+				"Total Forum Posts", "Joined Date", "Last Visted Date", "Last Ladder Online", "Poe.Trade Online" }, 0) {
 
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			public Class getColumnClass(int column) {
-				if (column == 3 || column == 4 || column == 5)
+				if (column == 3)
+					return Integer.class;
+				else if (column == 4 || column == 5 || column == 6)
 					return Date.class;
-				else if (column == 6)
+				else if (column == 7)
 					return Boolean.class;
 				else
 					return Object.class;
-
 			}
 
 			public boolean isCellEditable(int row, int column) {
@@ -83,11 +90,14 @@ public class GUI extends JPanel implements ActionListener {
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		table.setRowHeight(25);
 
-		// table.getColumnModel().getColumn(2)
-		// .setCellRenderer(new ChallengesIconRenderer());
-		table.getColumnModel().getColumn(3).setCellRenderer(new DateRenderer());
+		// adjuster = new TableColumnAdjuster(table);
+		// adjuster.adjustColumns();
+
+		table.getColumnModel().getColumn(2).setCellRenderer(new ChallengeIconsRenderer());
+		table.getColumnModel().getColumn(3).setCellRenderer(new LeftRenderer());
 		table.getColumnModel().getColumn(4).setCellRenderer(new DateRenderer());
-		table.getColumnModel().getColumn(5).setCellRenderer(new TimeRenderer());
+		table.getColumnModel().getColumn(5).setCellRenderer(new DateRenderer());
+		table.getColumnModel().getColumn(6).setCellRenderer(new TimeRenderer());
 
 		add(new JScrollPane(table), BorderLayout.CENTER);
 
@@ -126,6 +136,7 @@ public class GUI extends JPanel implements ActionListener {
 	}
 
 	public static void setUIFont(javax.swing.plaf.FontUIResource f) {
+		@SuppressWarnings("rawtypes")
 		java.util.Enumeration keys = UIManager.getDefaults().keys();
 		while (keys.hasMoreElements()) {
 			Object key = keys.nextElement();
@@ -139,10 +150,19 @@ public class GUI extends JPanel implements ActionListener {
 
 		try {
 			org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.launchBeautyEyeLNF();
-
 			// UIManager.setLookAndFeel(org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper.getBeautyEyeLNFCrossPlatform());
-			// setUIFont(new javax.swing.plaf.FontUIResource("Tahoma",
-			// Font.PLAIN, 13));
+
+			UIManager.put("RootPane.setupButtonVisible", false);
+
+			// UIManager.getDefaults().put("TextArea.font",
+			// UIManager.getFont("TextField.font"));
+
+			Font robotoFont = Font.createFont(Font.TRUETYPE_FONT, new File("resources\\Roboto-Regular.ttf"));
+			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+			ge.registerFont(robotoFont.deriveFont(13F));
+
+			setUIFont(new FontUIResource(robotoFont.deriveFont(13F)));
+
 		} catch (Exception e) {
 			// If not available, you can set the GUI to another look
 			// and feel.
@@ -151,7 +171,7 @@ public class GUI extends JPanel implements ActionListener {
 		JFrame frame = new JFrame("PoE Simple Guild " + VERSION);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		GUI newContentPane = new GUI();
+		PoESimpleGuild newContentPane = new PoESimpleGuild();
 		newContentPane.setOpaque(true);
 		frame.setContentPane(newContentPane);
 
@@ -162,7 +182,7 @@ public class GUI extends JPanel implements ActionListener {
 	public static void main(String args[]) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				GUI.createAndShowGUI();
+				PoESimpleGuild.createAndShowGUI();
 			}
 		});
 	}
@@ -185,7 +205,9 @@ public class GUI extends JPanel implements ActionListener {
 				int i = 0;
 				int guildSize = detailsContent.getElementsByClass("member").size();
 
+				// Clear all texts and print out Guild details
 				output.setText("");
+
 				output.append("Guild Name: " + detailsContent.getElementsByClass("name").first().text() + "\t");
 				try {
 					output.append("Guild Tag: " + detailsContent.getElementsByClass("guild-tag").first().text() + "\n");
@@ -197,6 +219,7 @@ public class GUI extends JPanel implements ActionListener {
 				output.append("Created: " + detailsContent.child(1).childNode(3).toString() + "\n");
 				output.append("Total Members: " + guildSize + "\n");
 
+				// Run through each Guildmembers
 				for (Element member : detailsContent.getElementsByClass("member")) {
 					i++;
 					String accountName = member.child(0).text().trim();
@@ -206,28 +229,30 @@ public class GUI extends JPanel implements ActionListener {
 						title = member.child(0).child(0).child(0).attr("title");
 					}
 
+					// Instantiate account object
 					Account account = new Account(accountName);
 					Date joinedDate = account.getJoinedDate();
 					Date lastVisitedDate = account.getLastVisitedDate();
+					int forumPosts = account.getForumPosts();
 					Date lastLadderOnline = account.getLastLadderOnline();
+					if (lastLadderOnline.equals(Date.from(Instant.ofEpochSecond(0))))
+						lastLadderOnline = null;
 					boolean poeTradeOnline = false;
+
 					if (checkBoxPoeTrade.isSelected() == true)
 						poeTradeOnline = account.getPoeTradeOnlineStatus();
+
+					// In case you want to hide the Poe.Trade Online column:
 					// else {
 					// table.getColumnModel().getColumn(6).setMinWidth(0);
 					// table.getColumnModel().getColumn(6).setMaxWidth(0);
 					// table.getColumnModel().getColumn(6).setWidth(0);
 					// }
 
-					if (member.child(0).child(0).childNodeSize() == 2) {
-						tableModel.addRow(new Object[] { accountName, memberType, title, joinedDate, lastVisitedDate,
-								lastLadderOnline, poeTradeOnline });
-						output.append("Status: Loaded " + i + "/" + guildSize + " Members\n");
-					} else {
-						tableModel.addRow(new Object[] { accountName, memberType, title, joinedDate, lastVisitedDate,
-								lastLadderOnline, poeTradeOnline });
-						output.append("Status: Loaded " + i + "/" + guildSize + " Members\n");
-					}
+					tableModel.addRow(new Object[] { accountName, memberType, title, forumPosts, joinedDate,
+							lastVisitedDate, lastLadderOnline, poeTradeOnline });
+					// adjuster.adjustColumns();
+					output.append("Status: Loaded " + i + "/" + guildSize + " Members\n");
 
 				}
 				long tEnd = System.currentTimeMillis();
@@ -239,8 +264,10 @@ public class GUI extends JPanel implements ActionListener {
 				e.printStackTrace();
 			} catch (ParseException e) {
 				e.printStackTrace();
-			} catch (IOException e) {
+			} catch (java.net.SocketTimeoutException e) {
 				JOptionPane.showMessageDialog(null, "Connection timed out! Please try again.", "Error", 0);
+				e.printStackTrace();
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
 			return null;
