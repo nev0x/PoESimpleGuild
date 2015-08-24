@@ -40,7 +40,7 @@ public class Account {
 		// Retry when timeout
 		for (int i = 0; i < 10; i++) {
 			try {
-				Document jsoupDoc = Jsoup.connect("http://www.pathofexile.com/account/view-profile/" + profile)
+				Document jsoupDoc = Jsoup.connect("http://www.pathofexile.com/account/view-profile/" + this.profile)
 						.timeout(5000).get();
 				details = jsoupDoc.getElementsByClass("details").first();
 				break;
