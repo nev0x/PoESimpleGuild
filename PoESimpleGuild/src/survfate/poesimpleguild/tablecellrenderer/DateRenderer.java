@@ -1,6 +1,7 @@
 package survfate.poesimpleguild.tablecellrenderer;
 
 import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 import javax.swing.table.DefaultTableCellRenderer;
 
@@ -10,7 +11,7 @@ public class DateRenderer extends DefaultTableCellRenderer {
 	SimpleDateFormat sDateFormat;
 
 	public DateRenderer() {
-		sDateFormat = new SimpleDateFormat("MMMM dd, yyyy");
+		sDateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH);
 	}
 
 	public void setValue(Object value) {

@@ -301,7 +301,7 @@ public class PoESimpleGuild extends JPanel implements ActionListener {
 			} catch (ParseException e) {
 				e.printStackTrace();
 			} catch (java.net.SocketTimeoutException e) {
-				JOptionPane.showMessageDialog(null, "Connection timed out! Please try again.", "Error", 0);
+				JOptionPane.showMessageDialog(null, "Connection timed out after 10 try! Please try again.", "Error", 0);
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();

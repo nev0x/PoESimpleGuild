@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Locale;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -30,14 +31,14 @@ public class Account {
 	private int forumPosts;
 	private Date lastLadderOnline;
 	private boolean poeTradeOnline = false;
-	private SimpleDateFormat sDateFormat = new SimpleDateFormat("MMMM dd, yyyy");;
+	private SimpleDateFormat sDateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH);;
 
 	public Account(String profile) throws IOException, ParseException {
 		// Encode the profile parameter
 		this.profile = java.net.URLEncoder.encode(profile, "UTF-8");
 
 		// Retry when timeout
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 10; i++) {
 			try {
 				Document jsoupDoc = Jsoup.connect("http://www.pathofexile.com/account/view-profile/" + profile)
 						.timeout(5000).get();
