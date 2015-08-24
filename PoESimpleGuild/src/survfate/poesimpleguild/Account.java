@@ -3,7 +3,7 @@ package survfate.poesimpleguild;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream.GetField;
+
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -12,8 +12,6 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
-
-import javax.swing.JOptionPane;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -25,6 +23,7 @@ import com.eclipsesource.json.JsonValue;
 public class Account {
 	/* Parameters */
 	private String profile;
+	private String status = "";
 	private Element details;
 	private Date joined;
 	private Date lastVisited;
@@ -34,8 +33,10 @@ public class Account {
 	private SimpleDateFormat sDateFormat = new SimpleDateFormat("MMMM dd, yyyy");;
 
 	public Account(String profile) throws IOException, ParseException {
-		this.profile = profile;
+		// Encode the profile parameter
+		this.profile = java.net.URLEncoder.encode(profile, "UTF-8");
 
+		// Retry when timeout
 		for (int i = 0; i < 3; i++) {
 			try {
 				Document jsoupDoc = Jsoup.connect("http://www.pathofexile.com/account/view-profile/" + profile)
@@ -57,18 +58,29 @@ public class Account {
 	}
 
 	/* Methods */
+	// Return an Profile URL of an account
+	public URL getURL() {
+		try {
+			return new URL("http://www.pathofexile.com/account/view-profile/" + this.profile);
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	// Return a joined date of an account
-	public Date getJoinedDate() throws ParseException {
+	public Date getJoinedDate() {
 		return this.joined;
 	}
 
 	// Return the last forum visited date of an account
-	public Date getLastVisitedDate() throws ParseException {
+	public Date getLastVisitedDate() {
 		return this.lastVisited;
 	}
 
 	// Return the total forum posts of an account
-	public int getForumPosts() throws ParseException {
+	public int getForumPosts() {
 		return this.forumPosts;
 	}
 
@@ -120,7 +132,7 @@ public class Account {
 	}
 
 	// Return the Poe.Trade Online status of an account, using a brute-force
-	// query trick
+	// query trick (bad speed)
 	public boolean getPoeTradeOnlineStatus() throws IOException {
 		String[] leagues = { "Standard", "Hardcore", "Warbands", "Tempest" };
 
@@ -134,6 +146,38 @@ public class Account {
 			}
 		}
 		return this.poeTradeOnline;
+	}
+
+	// Return a String contain Supporter Tags of an account
+	public String getSupporterTagKeys() {
+		String tagKeys = "";
+
+		for (Element tag : details.getElementsByAttributeValueContaining("class", "roleLabel")) {
+			if (tag.attr("class").equals("roleLabel in-alpha")) {
+				status = "Alpha Member";
+				continue;
+			} else if (tag.attr("class").equals("roleLabel onProbation")) {
+				status = "On Probation";
+				continue;
+			} else if (tag.attr("class").equals("roleLabel banned")) {
+				status = "Banned";
+				continue;
+			}
+			String imgSrc = tag.child(0).attr("src");
+			String imgFileName = imgSrc.substring(imgSrc.lastIndexOf('/') + 1, imgSrc.length());
+			String imgKey = imgFileName.substring(0, imgFileName.lastIndexOf('.')).toLowerCase().replace('-', '_');
+			tagKeys += imgKey + " ";
+		}
+		return tagKeys.trim();
+	}
+
+	// Return "On Probation" or "Banned" status of an account if there is one
+	// Must be called after getSupporterTagKeys()
+	public String getStatus() {
+		if (!this.status.equals(""))
+			return " (" + this.status + ")";
+		else
+			return this.status;
 	}
 
 	// Return a list of currently active leagues, currently not used
