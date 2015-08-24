@@ -13,6 +13,7 @@ import java.net.URL;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
+import java.util.StringTokenizer;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -169,6 +170,7 @@ public class PoESimpleGuild extends JPanel implements ActionListener {
 		table.getColumnModel().getColumn(5).setCellRenderer(new DateRenderer());
 		table.getColumnModel().getColumn(6).setCellRenderer(new TimeRenderer());
 		table.getColumnModel().getColumn(7).setCellRenderer(new SupporterTagsRenderer());
+
 		URLRenderer urlRenderer = new URLRenderer();
 		table.getColumnModel().getColumn(9).setCellRenderer(urlRenderer);
 		table.addMouseListener(urlRenderer);
@@ -273,7 +275,11 @@ public class PoESimpleGuild extends JPanel implements ActionListener {
 					Date lastLadderOnline = account.getLastLadderOnline(); // 6
 					if (lastLadderOnline.equals(Date.from(Instant.ofEpochSecond(0))))
 						lastLadderOnline = null;
-					String tagKeys = account.getSupporterTagKeys(); // 7
+					StringTokenizer tokenizer = new StringTokenizer(account.getSupporterTagKeys());
+					// Technically the tagKeys is still a string but we can
+					// still sort it since it only single digit, also it'll help
+					// shorter the code
+					String tagKeys = String.valueOf(tokenizer.countTokens()) + " " + account.getSupporterTagKeys(); // 7
 					boolean poeTradeOnline = false;
 					if (checkBoxPoeTrade.isSelected() == true)
 						poeTradeOnline = account.getPoeTradeOnlineStatus(); // 8
